@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Task Automation Platform — Control Panel</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-sky-500 selection:text-white">
+
+    <!-- Top Navigation Bar -->
+    <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
+                    <i data-lucide="cpu" class="w-5 h-5 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-2">
+                        Task Automator
+                        <span id="db-badge" class="text-xs px-2 py-0.5 rounded-full font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Loading DB...</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Sequential Autonomous Multi-Agent Engine</p>
+                </div>
+            </div>
+
+            <!-- Global Actions & Tabs -->
+            <div class="flex items-center space-x-3">
+                <nav class="flex items-center space-x-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+                    <button onclick="switchTab('tasks')" id="tab-btn-tasks" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all bg-sky-500 text-white shadow-sm flex items-center gap-1.5">
+                        <i data-lucide="layout-list" class="w-4 h-4"></i>
+                        Tasks Board
+                    </button>
+                    <button onclick="switchTab('prompts')" id="tab-btn-prompts" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all text-slate-400 hover:text-slate-200 hover:bg-slate-800 flex items-center gap-1.5">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        Role Prompts
+                    </button>
+                </nav>
+
+                <button onclick="openAntigravityModal()" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-purple-500/40 text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 transition flex items-center gap-1.5">
+                    <i data-lucide="terminal" class="w-4 h-4 text-purple-400"></i>
+                    Antigravity Prompt
+                </button>
+
+                <button onclick="pickAndRunNextTask()" id="btn-pick-run" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-md shadow-emerald-500/20 transition flex items-center gap-1.5">
+                    <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+                    Pick & Run Next
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- ================= TASKS TAB ================= -->
+        <section id="tab-tasks" class="space-y-6">
+            
+            <!-- Quick Stats & Create Task Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Task Creation Form -->
+                <div class="lg:col-span-1 bg-slate-950 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                        <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+                            <i data-lucide="plus-circle" class="w-4 h-4 text-sky-400"></i>
+                            Create New Task
+                        </h2>
+                        <span class="text-[11px] text-slate-400">Status: pending</span>
+                    </div>
+
+                    <form id="create-task-form" onsubmit="handleCreateTask(event)" class="space-y-3.5">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Task Title</label>
+                            <input type="text" id="task-title" required placeholder="e.g. Build JWT auth middleware" 
+                                class="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Project Path (Directory)</label>
+                            <input type="text" id="task-path" placeholder="/Applications/XAMPP/xamppfiles/htdocs/Project/..."
+                                class="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Task Requirements & Description</label>
+                            <textarea id="task-desc" required rows="4" placeholder="Detail the technical specifications, requirements, and constraints..." 
+                                class="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition"></textarea>
+                        </div>
+
+                        <button type="submit" id="btn-submit-task" class="w-full py-2 px-4 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs shadow-lg shadow-sky-600/20 transition flex items-center justify-center gap-1.5">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            Add Task to Queue
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Process Overview Pipeline & Stats -->
+                <div class="lg:col-span-2 space-y-4">
+                    <!-- 5-Step Pipeline Card -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 shadow-xl">
+                        <h3 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-4 flex items-center justify-between">
+                            <span>Sequential Agent Workflow Pipeline</span>
+                            <span class="text-[11px] text-slate-400 font-normal">Auto-transitions</span>
+                        </h3>
+                        <div class="grid grid-cols-5 gap-2 text-center text-xs">
+                            <div class="p-2.5 rounded-xl border border-slate-800 bg-slate-900/50">
+                                <div class="text-[10px] text-slate-400 font-mono">STEP 1</div>
+                                <div class="font-bold text-slate-200 mt-1">Pick Task</div>
+                                <span class="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">pending</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl border border-blue-900/40 bg-blue-950/20">
+                                <div class="text-[10px] text-blue-400 font-mono">STEP 2</div>
+                                <div class="font-bold text-blue-300 mt-1">Planner</div>
+                                <span class="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-blue-900/40 text-blue-300">planned</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl border border-amber-900/40 bg-amber-950/20">
+                                <div class="text-[10px] text-amber-400 font-mono">STEP 3</div>
+                                <div class="font-bold text-amber-300 mt-1">Developer</div>
+                                <span class="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-900/40 text-amber-300">developed</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl border border-purple-900/40 bg-purple-950/20">
+                                <div class="text-[10px] text-purple-400 font-mono">STEP 4</div>
+                                <div class="font-bold text-purple-300 mt-1">Tester</div>
+                                <span class="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-purple-900/40 text-purple-300">tested</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl border border-emerald-900/40 bg-emerald-950/20">
+                                <div class="text-[10px] text-emerald-400 font-mono">STEP 5</div>
+                                <div class="font-bold text-emerald-300 mt-1">Complete</div>
+                                <span class="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-900/40 text-emerald-300">completed</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Task Counters -->
+                    <div class="grid grid-cols-4 gap-3">
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between">
+                            <div>
+                                <p class="text-[11px] text-slate-400 uppercase font-semibold">Total Tasks</p>
+                                <p id="stat-total" class="text-xl font-bold text-white mt-0.5">0</p>
+                            </div>
+                            <div class="p-2 bg-slate-900 rounded-lg text-slate-400"><i data-lucide="layers" class="w-4 h-4"></i></div>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between">
+                            <div>
+                                <p class="text-[11px] text-amber-400 uppercase font-semibold">Pending / Queued</p>
+                                <p id="stat-pending" class="text-xl font-bold text-amber-400 mt-0.5">0</p>
+                            </div>
+                            <div class="p-2 bg-amber-950/40 rounded-lg text-amber-400"><i data-lucide="clock" class="w-4 h-4"></i></div>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between">
+                            <div>
+                                <p class="text-[11px] text-sky-400 uppercase font-semibold">In Progress</p>
+                                <p id="stat-in-progress" class="text-xl font-bold text-sky-400 mt-0.5">0</p>
+                            </div>
+                            <div class="p-2 bg-sky-950/40 rounded-lg text-sky-400"><i data-lucide="loader" class="w-4 h-4"></i></div>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between">
+                            <div>
+                                <p class="text-[11px] text-emerald-400 uppercase font-semibold">Completed</p>
+                                <p id="stat-completed" class="text-xl font-bold text-emerald-400 mt-0.5">0</p>
+                            </div>
+                            <div class="p-2 bg-emerald-950/40 rounded-lg text-emerald-400"><i data-lucide="check-circle" class="w-4 h-4"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task List Table -->
+            <div class="bg-slate-950 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+                <div class="p-4 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="list-filter" class="w-4 h-4 text-slate-400"></i>
+                        <h3 class="text-sm font-semibold text-white">Tasks Execution Queue</h3>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <select id="filter-status" onchange="loadTasks()" class="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-300 focus:outline-none focus:border-sky-500">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="planned">Planned</option>
+                            <option value="developed">Developed</option>
+                            <option value="tested">Tested</option>
+                            <option value="completed">Completed</option>
+                            <option value="failed">Failed</option>
+                        </select>
+                        <button onclick="loadTasks()" title="Refresh" class="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 bg-slate-900/60 text-slate-400 uppercase font-mono text-[11px]">
+                                <th class="py-3 px-4 w-16">ID</th>
+                                <th class="py-3 px-4">Title & Context</th>
+                                <th class="py-3 px-4 w-32">Status</th>
+                                <th class="py-3 px-4 w-28">Active Role</th>
+                                <th class="py-3 px-4 w-40">Artifacts</th>
+                                <th class="py-3 px-4 w-52 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tasks-table-body" class="divide-y divide-slate-800/60">
+                            <tr>
+                                <td colspan="6" class="py-8 text-center text-slate-500">
+                                    Loading tasks...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ================= PROMPTS TAB ================= -->
+        <section id="tab-prompts" class="hidden space-y-6">
+            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 shadow-xl flex items-center justify-between">
+                <div>
+                    <h2 class="text-sm font-semibold text-white flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-4 h-4 text-sky-400"></i>
+                        Role-Wise Prompt Templates
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Configure system prompts, variables, and LLM parameters for each stage.</p>
+                </div>
+                <div class="text-xs text-slate-400 flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1 font-mono text-[11px] bg-slate-900 px-2 py-1 rounded border border-slate-800">
+                        Available: <code>{{task_id}}</code>, <code>{{title}}</code>, <code>{{description}}</code>, <code>{{plan_output}}</code>, <code>{{dev_output}}</code>
+                    </span>
+                </div>
+            </div>
+
+            <!-- 3 Role Prompt Cards Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="prompts-grid">
+                <!-- Dynamically loaded via app.js -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal: View Task Outputs & Logs -->
+    <div id="modal-task-detail" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in duration-150">
+            <!-- Modal Header -->
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+                <div class="flex items-center space-x-2">
+                    <span id="modal-task-id" class="font-mono text-xs text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">#1</span>
+                    <h3 id="modal-task-title" class="text-sm font-bold text-white truncate max-w-lg">Task Output Details</h3>
+                </div>
+                <button onclick="closeModal('modal-task-detail')" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Modal Tabs for 3 Artifact Outputs -->
+            <div class="flex border-b border-slate-800 bg-slate-950/60 px-4 pt-2 gap-2 text-xs">
+                <button onclick="switchDetailTab('plan')" id="tab-modal-plan" class="px-3 py-1.5 font-medium border-b-2 border-sky-500 text-sky-400 flex items-center gap-1.5">
+                    <i data-lucide="compass" class="w-3.5 h-3.5"></i>
+                    Planner Blueprint
+                </button>
+                <button onclick="switchDetailTab('dev')" id="tab-modal-dev" class="px-3 py-1.5 font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                    <i data-lucide="code" class="w-3.5 h-3.5"></i>
+                    Developer Code & Changes
+                </button>
+                <button onclick="switchDetailTab('test')" id="tab-modal-test" class="px-3 py-1.5 font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+                    <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
+                    Tester Audit & Report
+                </button>
+                <button onclick="switchDetailTab('error')" id="tab-modal-error" class="px-3 py-1.5 font-medium border-b-2 border-transparent text-rose-400 hover:text-rose-300 hidden items-center gap-1.5">
+                    <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                    Error Log
+                </button>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="p-5 flex-1 overflow-y-auto space-y-4 text-xs font-mono">
+                <div id="detail-tab-plan" class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-slate-300 whitespace-pre-wrap leading-relaxed select-text"></div>
+                <div id="detail-tab-dev" class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-emerald-300 whitespace-pre-wrap leading-relaxed select-text hidden"></div>
+                <div id="detail-tab-test" class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-purple-300 whitespace-pre-wrap leading-relaxed select-text hidden"></div>
+                <div id="detail-tab-error" class="bg-rose-950/20 p-4 rounded-xl border border-rose-800/40 text-rose-300 whitespace-pre-wrap leading-relaxed select-text hidden"></div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-3 border-t border-slate-800 bg-slate-950 flex justify-between items-center text-xs">
+                <span id="modal-task-status-badge"></span>
+                <button onclick="closeModal('modal-task-detail')" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Antigravity IDE Master Prompt -->
+    <div id="modal-antigravity" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="terminal" class="w-4 h-4 text-purple-400"></i>
+                    <h3 class="text-sm font-bold text-white">Antigravity IDE Master Runner Prompt</h3>
+                </div>
+                <button onclick="closeModal('modal-antigravity')" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="p-5 flex-1 overflow-y-auto space-y-3 text-xs text-slate-300">
+                <p>Paste this single prompt into your <strong>Antigravity IDE chat</strong>. Antigravity will autonomously pick pending tasks one by one, execute Planner &rarr; Developer &rarr; Tester roles, create real code files, and update MySQL status automatically:</p>
+                <div class="relative">
+                    <textarea id="ag-prompt-text" readonly rows="12" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-purple-200 select-all focus:outline-none"></textarea>
+                    <button onclick="copyAgPrompt()" id="btn-copy-ag" class="absolute top-2 right-2 px-3 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded-md text-xs font-medium shadow flex items-center gap-1 transition">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                        Copy Prompt
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+    <script src="js/app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
+
